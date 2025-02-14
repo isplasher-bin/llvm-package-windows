@@ -1,56 +1,61 @@
 name: GitHub CI
 
 on:
-    pull_request:
-    push:
-    workflow_dispatch:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - bin
+  push:
+    branches:
+      - bin
+    
 
 jobs:
-    windowsBuild:
-        name: Windows Build
-        runs-on: windows-2022
-        env:
-            BUILD_PROJECT: llvm
-            BUILD_MASTER: false
-            LLVM_VERSION: 20.1.0-rc2
+  windowsBuild:
+    name: Windows Build
+    runs-on: windows-2022
+    env:
+      BUILD_PROJECT: llvm
+      BUILD_MASTER: false
+      LLVM_VERSION: 20.1.0-rc2
 
-        strategy:
-            fail-fast: false
-            matrix:
-                CRT:
-                -   msvcrt
-                -   libcmt
+    strategy:
+      fail-fast: false
+      matrix:
+        CRT:
+        - msvcrt
+        - libcmt
 
-                TARGET_CPU:
-                -   x86
-                -   amd64
+        TARGET_CPU:
+        - x86
+        - amd64
 
-                CONFIGURATION:
-                -   Debug
-                -   Release
+        CONFIGURATION:
+        - Debug
+        - Release
 
-        steps:
-        -   name: Checkout repo
-            uses: actions/checkout@v3
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
 
-        -   name: Install
-            shell: cmd
-            run: |
-                call %GITHUB_WORKSPACE%\set-env.bat msvc17 ${{matrix.CRT}} ${{matrix.TARGET_CPU}} ${{matrix.CONFIGURATION}}
-                call %GITHUB_WORKSPACE%\install.bat
+    - name: Install
+      shell: cmd
+      run: |
+        call %GITHUB_WORKSPACE%\set-env.bat msvc17 ${{matrix.CRT}} ${{matrix.TARGET_CPU}} ${{matrix.CONFIGURATION}}
+        call %GITHUB_WORKSPACE%\install.bat
 
-        -   name: Build and test
-            id: BUILD
-            shell: cmd
-            run: |
-                call %GITHUB_WORKSPACE%\set-env.bat msvc17 ${{matrix.CRT}} ${{matrix.TARGET_CPU}} ${{matrix.CONFIGURATION}}
-                call %GITHUB_WORKSPACE%\build.bat
-                echo ::set-output name=DEPLOY_FILE::%DEPLOY_FILE%
+    - name: Build and test
+      id: BUILD
+      shell: cmd
+      run: |
+        call %GITHUB_WORKSPACE%\set-env.bat msvc17 ${{matrix.CRT}} ${{matrix.TARGET_CPU}} ${{matrix.CONFIGURATION}}
+        call %GITHUB_WORKSPACE%\build.bat
+        echo ::set-output name=DEPLOY_FILE::%DEPLOY_FILE%
 
-        -   name: Release
-            uses: softprops/action-gh-release@v1
-            if: startsWith(github.ref, 'refs/tags/')
-            env:
-                GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-            with:
-                files: ${{steps.BUILD.outputs.DEPLOY_FILE}}
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      with:
+        files: ${{steps.BUILD.outputs.DEPLOY_FILE}}
