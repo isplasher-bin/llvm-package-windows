@@ -55,7 +55,7 @@ jobs:
     - name: Upload binary
       uses: actions/upload-artifact@v4
       with:
-        name: binaries
+        name: binaries-${{matrix.CRT}}-${{matrix.TARGET_CPU}}-${{matrix.CONFIGURATION}}
         path: ${{env.DEPLOY_FILE}}
         overwrite: true
 
@@ -64,5 +64,5 @@ jobs:
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
       with:
-        name: ${{env.LLVM_VERSION}}
+        name: ${{env.LLVM_VERSION}}-${{matrix.CRT}}-${{matrix.TARGET_CPU}}-${{matrix.CONFIGURATION}}
         files: ${{env.DEPLOY_FILE}}
