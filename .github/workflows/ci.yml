@@ -34,12 +34,18 @@ jobs:
         - Debug
         - Release
 
+        BUILD_PROJECT:
+        - llvm
+        - clang
+
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
 
     - name: Install
       shell: cmd
+      env:
+        BUILD_PROJECT: ${{matrix.BUILD_PROJECT}}
       run: |
         call %GITHUB_WORKSPACE%\set-env.bat msvc17 ${{matrix.CRT}} ${{matrix.TARGET_CPU}} ${{matrix.CONFIGURATION}}
         call %GITHUB_WORKSPACE%\install.bat
@@ -47,6 +53,8 @@ jobs:
     - name: Build and test
       id: BUILD
       shell: cmd
+      env:
+        BUILD_PROJECT: ${{matrix.BUILD_PROJECT}}
       run: |
         call %GITHUB_WORKSPACE%\set-env.bat msvc17 ${{matrix.CRT}} ${{matrix.TARGET_CPU}} ${{matrix.CONFIGURATION}}
         call %GITHUB_WORKSPACE%\build.bat
@@ -55,7 +63,7 @@ jobs:
     - name: Upload binary
       uses: actions/upload-artifact@v4
       with:
-        name: binaries-${{matrix.CRT}}-${{matrix.TARGET_CPU}}-${{matrix.CONFIGURATION}}
+        name: ${{matrix.BUILD_PROJECT}}-${{matrix.CRT}}-${{matrix.TARGET_CPU}}-${{matrix.CONFIGURATION}}
         path: ${{env.DEPLOY_FILE}}
         overwrite: true
 
@@ -64,5 +72,5 @@ jobs:
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
       with:
-        name: ${{env.LLVM_VERSION}}-${{matrix.CRT}}-${{matrix.TARGET_CPU}}-${{matrix.CONFIGURATION}}
+        name: ${{matrix.BUILD_PROJECT}}-${{env.LLVM_VERSION}}-${{matrix.CRT}}-${{matrix.TARGET_CPU}}-${{matrix.CONFIGURATION}}
         files: ${{env.DEPLOY_FILE}}
